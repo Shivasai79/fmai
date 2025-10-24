@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Moon, Sun, Menu, X } from 'lucide-react';
+import { Search, Moon, Sun, Menu, X, LogOut } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 
 const Header = ({ onSearch }) => {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, login, logout, initializing } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -16,17 +16,17 @@ const Header = ({ onSearch }) => {
     onSearch(searchQuery);
   };
 
-  const handleGoogleLogin = () => {
-    // Mock login for now - will integrate Emergent Google auth later
-    const mockUser = {
-      name: 'John Doe',
-      email: 'john@example.com',
-      avatar: 'https://ui-avatars.com/api/?name=John+Doe'
-    };
-    alert('Google login will be integrated with Emergent authentication');
-    // Uncomment when backend is ready:
-    // login(mockUser);
-  };
+  if (initializing) {
+    return (
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-center">
+            <div className="text-sm text-muted-foreground">Loading...</div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -71,17 +71,24 @@ const Header = ({ onSearch }) => {
             {user ? (
               <div className="flex items-center space-x-3">
                 <img
-                  src={user.avatar}
+                  src={user.picture}
                   alt={user.name}
                   className="h-8 w-8 rounded-full"
                 />
-                <Button variant="outline" size="sm" onClick={logout}>
-                  Logout
+                <span className="text-sm font-medium">{user.name}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={logout}
+                  className="flex items-center space-x-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
                 </Button>
               </div>
             ) : (
               <Button
-                onClick={handleGoogleLogin}
+                onClick={login}
                 className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium"
               >
                 Sign in with Google
@@ -132,13 +139,20 @@ const Header = ({ onSearch }) => {
               </Button>
 
               {user ? (
-                <Button variant="outline" size="sm" onClick={logout}>
-                  Logout
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    className="h-8 w-8 rounded-full"
+                  />
+                  <Button variant="outline" size="sm" onClick={logout}>
+                    Logout
+                  </Button>
+                </div>
               ) : (
                 <Button
                   size="sm"
-                  onClick={handleGoogleLogin}
+                  onClick={login}
                   className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium"
                 >
                   Sign in
