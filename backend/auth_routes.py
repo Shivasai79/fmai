@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
 EMERGENT_AUTH_API = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+
+# Get database from server.py instead of creating new connection
+def get_db():
+    from server import db
+    return db
 
 @router.post("/session")
 async def create_session(request: Request, response: Response):
@@ -22,6 +23,7 @@ async def create_session(request: Request, response: Response):
     Process session_id from frontend and create session
     """
     try:
+        db = get_db()
         body = await request.json()
         session_id = body.get('session_id')
         
@@ -93,6 +95,7 @@ async def get_current_user(request: Request):
     """
     Get current authenticated user
     """
+    db = get_db()
     # Check cookie first, then Authorization header
     session_token = request.cookies.get("session_token")
     
@@ -134,6 +137,7 @@ async def logout(request: Request, response: Response):
     """
     Logout user and clear session
     """
+    db = get_db()
     session_token = request.cookies.get("session_token")
     
     if session_token:
